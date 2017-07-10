@@ -1,30 +1,29 @@
-﻿using Microsoft.Owin.Security.DataHandler.Encoder;
+﻿using Microsoft.IdentityModel.Tokens;
+using Microsoft.Owin.Security.DataHandler.Encoder;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Thinktecture.IdentityModel.Tokens;
-using Microsoft.IdentityModel.Tokens;
-using System.Security.Cryptography;
-using System.IdentityModel.Claims;
-using System.Text;
-using System.Configuration;
 
 namespace sapHowmuchConsumer
 {
 	internal class Program
 	{
 		private static string _apiServer;
+
 		//private static string _apiServer = "localhost:32926";
 		private static string _userName;
+
 		private static string _password;
-		private static string _clientId; 
+		private static string _clientId;
 		private static string _clientSecret;
 		private static TokenData _tokenResult; // NOTE: volatile data
 
@@ -39,7 +38,7 @@ namespace sapHowmuchConsumer
 			_clientId = ConfigurationManager.AppSettings["clientId"];
 			_clientSecret = ConfigurationManager.AppSettings["clientSecret"];
 
-			#endregion
+			#endregion get app settings
 
 			// api base address
 			var baseUri = new Uri($"http://{_apiServer}");
@@ -68,7 +67,27 @@ namespace sapHowmuchConsumer
 
 				Console.WriteLine();
 				Console.WriteLine();
-				Console.WriteLine("------------- CONSUME WEBAPI (SELECT) -------------");
+				Console.WriteLine("------------- CONSUME WEBAPI (SELECT Item) -------------");
+				ExecuteOperation(() => SelectItems(baseUri).Wait());
+
+				Console.WriteLine();
+				Console.WriteLine();
+				Console.WriteLine("------------- CONSUME WEBAPI (SELECT Business Partner) -------------");
+				ExecuteOperation(() => SelectBP(baseUri).Wait());
+
+				Console.WriteLine();
+				Console.WriteLine();
+				Console.WriteLine("------------- CONSUME WEBAPI (SELECT VatGroup) -------------");
+				ExecuteOperation(() => SelectVatGroup(baseUri).Wait());
+
+				Console.WriteLine();
+				Console.WriteLine();
+				Console.WriteLine("------------- CONSUME WEBAPI (SELECT Chart of Account) -------------");
+				ExecuteOperation(() => SelectCoa(baseUri).Wait());
+
+				Console.WriteLine();
+				Console.WriteLine();
+				Console.WriteLine("------------- CONSUME WEBAPI (SELECT VouchersList) -------------");
 				ExecuteOperation(() => SelectJournalVouchersList(baseUri).Wait());
 
 				Console.WriteLine();
@@ -196,7 +215,7 @@ namespace sapHowmuchConsumer
 				client.DefaultRequestHeaders.Add("Accept", new MediaTypeHeaderValue("application/json").ToString());
 				request.Headers.Add("Authorization", $"Bearer {_tokenResult.AccessToken}");
 
-				request.Content = new StringContent(JsonConvert.SerializeObject( new { Entries = new object[] { sendObject } }), Encoding.UTF8, "application/json");
+				request.Content = new StringContent(JsonConvert.SerializeObject(new { Entries = new object[] { sendObject } }), Encoding.UTF8, "application/json");
 
 				await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead)
 					.ContinueWith((response) =>
@@ -256,7 +275,6 @@ namespace sapHowmuchConsumer
 			}
 		}
 
-		// 마스터 관련 (품목, 고객, 세금코드 등)
 		private static async Task SelectItems(Uri baseUri)
 		{
 			using (HttpClient client = new HttpClient())
