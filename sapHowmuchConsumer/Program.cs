@@ -14,21 +14,33 @@ using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
 using System.IdentityModel.Claims;
 using System.Text;
+using System.Configuration;
 
 namespace sapHowmuchConsumer
 {
 	internal class Program
 	{
-		private const string _apiServer = "sapdev1.semubot.com:9091";
-		//private const string _apiServer = "localhost:32926";
-		private static string _userName = "emaxit";
-		private static string _password = "2max!t63@!4";
-		private static string _clientId = "dad3b434-2ec5-4976-a34b-e3ed3f1eae77"; // NOTE: must be stored securely
-		private static string _clientSecret = "KERKZo_TiBQcj6zxI3eZ-xU7dHsJaWo18ThGarEqSZk"; // NOTE: must be stored securely
-		private static TokenData _tokenResult;
+		private static string _apiServer;
+		//private static string _apiServer = "localhost:32926";
+		private static string _userName;
+		private static string _password;
+		private static string _clientId; 
+		private static string _clientSecret;
+		private static TokenData _tokenResult; // NOTE: volatile data
 
 		private static void Main(string[] args)
 		{
+			#region get app settings
+
+			// NOTE: must be stored securely
+			_apiServer = ConfigurationManager.AppSettings["apiServer"];
+			_userName = ConfigurationManager.AppSettings["userName"];
+			_password = ConfigurationManager.AppSettings["password"];
+			_clientId = ConfigurationManager.AppSettings["clientId"];
+			_clientSecret = ConfigurationManager.AppSettings["clientSecret"];
+
+			#endregion
+
 			// api base address
 			var baseUri = new Uri($"http://{_apiServer}");
 
@@ -72,11 +84,6 @@ namespace sapHowmuchConsumer
 			Console.Write($"Press <Enter> to exit...");
 			Console.ReadLine();
 		}
-
-		// refresh token
-		// 토큰 검증
-		// api consume (R)
-		// 추후, (CUD) 추가 - api 에서도 작업 필요
 
 		private static async Task GetToken(Uri baseUri)
 		{
@@ -249,7 +256,142 @@ namespace sapHowmuchConsumer
 			}
 		}
 
-		// 정보 조회 메서드 샘플
+		// 마스터 관련 (품목, 고객, 세금코드 등)
+		private static async Task SelectItems(Uri baseUri)
+		{
+			using (HttpClient client = new HttpClient())
+			{
+				client.BaseAddress = baseUri;
+				HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, string.Concat(baseUri, "api/item"));
+
+				client.DefaultRequestHeaders.Add("Accept", new MediaTypeHeaderValue("application/json").ToString());
+				request.Headers.Add("Authorization", $"Bearer {_tokenResult.AccessToken}");
+
+				await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead)
+					.ContinueWith((response) =>
+					{
+						try
+						{
+							if (response.Result.IsSuccessStatusCode)
+							{
+								string getDataMessage = $"{Environment.NewLine}** operation completed @ {DateTime.Now.ToLongDateString()}, {DateTime.Now.ToLongTimeString()}";
+
+								Console.WriteLine($"{getDataMessage} Message: {Environment.NewLine}{JsonConvert.SerializeObject(response.Result.Content.ReadAsAsync<object>().TryResult(), Formatting.Indented)}");
+							}
+							else
+							{
+								ProcessFailResponse(response);
+							}
+						}
+						catch (AggregateException exs)
+						{
+							Console.WriteLine($"Exception: {exs}");
+						}
+					});
+			}
+		}
+
+		private static async Task SelectVatGroup(Uri baseUri)
+		{
+			using (HttpClient client = new HttpClient())
+			{
+				client.BaseAddress = baseUri;
+				HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, string.Concat(baseUri, "api/vat"));
+
+				client.DefaultRequestHeaders.Add("Accept", new MediaTypeHeaderValue("application/json").ToString());
+				request.Headers.Add("Authorization", $"Bearer {_tokenResult.AccessToken}");
+
+				await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead)
+					.ContinueWith((response) =>
+					{
+						try
+						{
+							if (response.Result.IsSuccessStatusCode)
+							{
+								string getDataMessage = $"{Environment.NewLine}** operation completed @ {DateTime.Now.ToLongDateString()}, {DateTime.Now.ToLongTimeString()}";
+
+								Console.WriteLine($"{getDataMessage} Message: {Environment.NewLine}{JsonConvert.SerializeObject(response.Result.Content.ReadAsAsync<object>().TryResult(), Formatting.Indented)}");
+							}
+							else
+							{
+								ProcessFailResponse(response);
+							}
+						}
+						catch (AggregateException exs)
+						{
+							Console.WriteLine($"Exception: {exs}");
+						}
+					});
+			}
+		}
+
+		private static async Task SelectBP(Uri baseUri)
+		{
+			using (HttpClient client = new HttpClient())
+			{
+				client.BaseAddress = baseUri;
+				HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, string.Concat(baseUri, "api/bp"));
+
+				client.DefaultRequestHeaders.Add("Accept", new MediaTypeHeaderValue("application/json").ToString());
+				request.Headers.Add("Authorization", $"Bearer {_tokenResult.AccessToken}");
+
+				await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead)
+					.ContinueWith((response) =>
+					{
+						try
+						{
+							if (response.Result.IsSuccessStatusCode)
+							{
+								string getDataMessage = $"{Environment.NewLine}** operation completed @ {DateTime.Now.ToLongDateString()}, {DateTime.Now.ToLongTimeString()}";
+
+								Console.WriteLine($"{getDataMessage} Message: {Environment.NewLine}{JsonConvert.SerializeObject(response.Result.Content.ReadAsAsync<object>().TryResult(), Formatting.Indented)}");
+							}
+							else
+							{
+								ProcessFailResponse(response);
+							}
+						}
+						catch (AggregateException exs)
+						{
+							Console.WriteLine($"Exception: {exs}");
+						}
+					});
+			}
+		}
+
+		private static async Task SelectCoa(Uri baseUri)
+		{
+			using (HttpClient client = new HttpClient())
+			{
+				client.BaseAddress = baseUri;
+				HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, string.Concat(baseUri, "api/coa"));
+
+				client.DefaultRequestHeaders.Add("Accept", new MediaTypeHeaderValue("application/json").ToString());
+				request.Headers.Add("Authorization", $"Bearer {_tokenResult.AccessToken}");
+
+				await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead)
+					.ContinueWith((response) =>
+					{
+						try
+						{
+							if (response.Result.IsSuccessStatusCode)
+							{
+								string getDataMessage = $"{Environment.NewLine}** operation completed @ {DateTime.Now.ToLongDateString()}, {DateTime.Now.ToLongTimeString()}";
+
+								Console.WriteLine($"{getDataMessage} Message: {Environment.NewLine}{JsonConvert.SerializeObject(response.Result.Content.ReadAsAsync<object>().TryResult(), Formatting.Indented)}");
+							}
+							else
+							{
+								ProcessFailResponse(response);
+							}
+						}
+						catch (AggregateException exs)
+						{
+							Console.WriteLine($"Exception: {exs}");
+						}
+					});
+			}
+		}
 
 		#region response process methods
 
