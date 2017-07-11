@@ -104,6 +104,8 @@ namespace sapHowmuchConsumer
 			Console.ReadLine();
 		}
 
+		#region Api endpoint consume
+
 		private static async Task GetToken(Uri baseUri)
 		{
 			using (HttpClient client = new HttpClient())
@@ -410,6 +412,8 @@ namespace sapHowmuchConsumer
 					});
 			}
 		}
+
+		#endregion
 
 		#region response process methods
 
