@@ -17,11 +17,9 @@ namespace sapHowmuchConsumer
 {
 	internal class Program
 	{
+		//private static string _apiServer = "localhost:32926"; // TEST
 		private static string _apiServer;
-
-		//private static string _apiServer = "localhost:32926";
 		private static string _userName;
-
 		private static string _password;
 		private static string _clientId;
 		private static string _clientSecret;
